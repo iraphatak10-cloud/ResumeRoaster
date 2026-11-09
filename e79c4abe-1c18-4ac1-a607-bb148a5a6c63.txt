@@ -1,0 +1,1443 @@
+{
+  "mode": "namespace",
+  "namespace": "cursor-origin",
+  "namespaceStatus": "ready",
+  "namespaceDescription": "Cursor Origin (origin.cursor.com) is a git host. These tools only see repositories hosted on Origin, addressed by their Origin namespace (owner) and repository name. A repository that only mirrors to Origin still counts as Origin-hosted. Repositories on GitHub or any other host are not visible here, so do not pass a GitHub owner or repository name; call list_namespaces to find the owners the caller can use.",
+  "tools": [
+    {
+      "tool": "checks_read",
+      "description": "Read checks for one target in an Origin-hosted repository: a pull request, commit, suite, or run. A top-level ref, sha, or pull number is accepted in place of target. Rollup covers materialized check runs on the current page only and is omitted when nextPageToken is present. A run with isRerequestable can be run again with rerun_checks. Does not fetch external provider logs.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "target": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "pull_request, commit, suite, or run"
+              },
+              "number": {
+                "description": "Pull request number, for a pull_request target",
+                "type": "number"
+              },
+              "sha": {
+                "description": "Commit SHA, for a commit target",
+                "type": "string"
+              },
+              "checkSuiteId": {
+                "description": "Check suite id, for a suite target",
+                "type": "string"
+              },
+              "checkRunId": {
+                "description": "Check run id, for a run target",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "pageToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "name",
+          "target"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "commit_read",
+      "description": "Read one commit in an Origin-hosted repository. Choose a single view: metadata, files, or a bounded patch. view defaults to metadata.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "sha": {
+            "type": "string"
+          },
+          "view": {
+            "default": "metadata",
+            "description": "metadata (default), files, or a bounded patch",
+            "type": "string"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "pageToken": {
+            "type": "string"
+          },
+          "startLine": {
+            "type": "number"
+          },
+          "endLine": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "owner",
+          "name",
+          "sha"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "compare_commits",
+      "description": "Compare two refs of an Origin-hosted repository relative to their merge base. Choose a single view: summary or files. view defaults to summary. Files pages the paths that differ between head and the merge base, including per-file patches. Continuation calls must resend base and head with pageToken; an omitted view still pages files.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "base": {
+            "type": "string",
+            "description": "Ref the comparison starts from"
+          },
+          "head": {
+            "type": "string",
+            "description": "Ref compared against the base"
+          },
+          "view": {
+            "default": "summary",
+            "description": "summary (default) or files",
+            "type": "string"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "pageToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "name",
+          "base",
+          "head"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "create_label",
+      "description": "Create a repository label so update_pull_request_labels can apply it. label is the name: 1-50 characters, trimmed, and unique in the repository by exact, case-sensitive spelling, so Bug and bug are different labels; reuse an existing label that differs only in case instead of creating another. color is six hex digits with an optional leading #, such as d73a4a; it defaults to ededed. description is optional, at most 255 characters. A name that already exists returns a conflict; apply that label instead.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "label": {
+            "type": "string",
+            "description": "Label name to create, 1-50 characters"
+          },
+          "color": {
+            "description": "Six hex digits, optional leading #; defaults to ededed",
+            "type": "string"
+          },
+          "description": {
+            "description": "Label description, at most 255 characters",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "name",
+          "label"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "create_pull_request",
+      "description": "Create a pull request from an already-pushed branch. To stack it, pass parentPullNumber: the base becomes that pull request's head branch (any other base is rejected), and head must have been built on that branch, meaning the two share a commit beyond the parent's own base. A head built off trunk or from unrelated history is rejected with the rebase to run. A head that has since fallen behind the parent is accepted and the response carries needsRestack, because the pull request cannot land until it is restacked; this tool never restacks. stackParent is the stored parent's number, read back after the create.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "title": {
+            "type": "string"
+          },
+          "head": {
+            "type": "string",
+            "description": "Already-pushed source branch"
+          },
+          "base": {
+            "description": "Target branch the pull request merges into. Required without parentPullNumber; with it, omit this or name the parent's head branch.",
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "draft": {
+            "type": "boolean"
+          },
+          "parentPullNumber": {
+            "description": "Pull request to stack on, by number. Its head branch becomes the base, and head must have been built on that branch.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "owner",
+          "name",
+          "title",
+          "head"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "create_pull_request_comment",
+      "description": "Create a general discussion comment on a pull request.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "number": {
+            "type": "number"
+          },
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "name",
+          "number",
+          "body"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "create_pull_request_inline_comment",
+      "description": "Create a file-level, single-line, or line-range inline comment, optionally against a specific pull request version.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "number": {
+            "type": "number"
+          },
+          "body": {
+            "type": "string"
+          },
+          "anchor": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "description": "file, line, or range"
+              },
+              "path": {
+                "type": "string",
+                "description": "Diff path. Deleted path for deletions; head path otherwise"
+              },
+              "side": {
+                "description": "left or right. Required for line and range; omit for file",
+                "type": "string"
+              },
+              "startLine": {
+                "description": "1-based first line. Required for line and range",
+                "type": "number"
+              },
+              "endLine": {
+                "description": "Inclusive last line. Required for range; omit otherwise",
+                "type": "number"
+              }
+            },
+            "required": [
+              "kind",
+              "path"
+            ]
+          },
+          "versionNumber": {
+            "description": "Pull request version. Omit or 0 for latest",
+            "type": "number"
+          }
+        },
+        "required": [
+          "owner",
+          "name",
+          "number",
+          "body",
+          "anchor"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "create_pull_request_review",
+      "description": "Submit a comment, approval, or request-changes review on a pull request. Inline review comments are unsupported.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "number": {
+            "type": "number"
+          },
+          "event": {
+            "type": "string",
+            "description": "COMMENT, APPROVE, or REQUEST_CHANGES"
+          },
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "name",
+          "number",
+          "event"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "create_repository",
+      "description": "Create an empty Origin-hosted repository. Pick an owner from list_namespaces where viewerCanCreateRepositories is true; omit owner to use the caller's personal namespace, which Origin claims on first use (needs an eligible plan, a Privacy Mode that allows code storage, and no team membership; team members pass their team slug). Both steps are one approval: confirm with the user before calling. defaultBranch defaults to main, and visibility defaults to internal; pass private when the user asks to limit the repository to explicitly granted people and groups. Repository names are unique per owner, so retrying after a success fails with a conflict; read the repository with get_repository instead. Returns the created repository, including cloneUrl.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "defaultBranch": {
+            "description": "Default branch name. Omit for main.",
+            "type": "string"
+          },
+          "visibility": {
+            "description": "internal (visible to members of the owner) or private (only explicitly granted people and groups). Omit for internal.",
+            "type": "string",
+            "enum": [
+              "internal",
+              "private"
+            ]
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "dismiss_pull_request_review",
+      "description": "Dismiss a submitted approve or request-changes review.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "number": {
+            "type": "number"
+          },
+          "reviewId": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string",
+            "description": "Reason recorded with the dismissal"
+          }
+        },
+        "required": [
+          "owner",
+          "name",
+          "number",
+          "reviewId",
+          "message"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "get_file_contents",
+      "description": "Read one path at a ref in an Origin-hosted repository. Files larger than the byte cap are truncated. A directory returns type dir and its immediate children as entries (name, path, type, sha, and size for files) instead of content; entries past the cap are dropped and truncated is set.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "path": {
+            "type": "string"
+          },
+          "ref": {
+            "type": "string"
+          },
+          "startLine": {
+            "type": "number"
+          },
+          "endLine": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "owner",
+          "name",
+          "path"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "get_git_tree",
+      "description": "List a git tree in an Origin-hosted repository at a tree SHA, commit SHA, branch, tag, or HEAD. sha defaults to HEAD. Immediate children by default, or the full walk with recursive true. Each entry is path, mode, type (blob, tree, or commit), sha, and size for blobs. Entries past the cap are dropped and truncated is set; list subtrees non-recursively to see more. get_file_contents reads one blob.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "sha": {
+            "default": "HEAD",
+            "description": "Tree SHA, commit SHA, branch, tag, or HEAD. Omit for HEAD.",
+            "type": "string"
+          },
+          "recursive": {
+            "description": "True walks the whole tree; omit for immediate children only",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "owner",
+          "name"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "get_pull_request_attachment",
+      "description": "Fetch one image, recording, or file attached to an Origin-hosted pull request. url is a media URL exactly as pull_request_read returns it in the description, a review, or a comment: a cursor.com user-attachments URL, a legacy upload-bucket URL, a cloud agent artifact share link (cursor.com/artifacts/c/art-…), a cloud agent's artifact page (cursor.com/agents/<agent id>/artifacts?path=…, the way an agent links its screen recordings), or a cloud agent's media URL (cursor.com/api/origin-cereal/graphite/background-agents/<owner>/<repo>/cursor/<agent id>/artifact-content?absolutePath=…, the way an agent embeds its screenshots, naming a file under its artifacts directory or in an agent store it mounts), which must name this pull request's repository. Only those shapes are accepted, and the URL must appear in that pull request's text; no other URL is ever fetched. A share link is served while its share stands; an agent's artifact page or media URL is served only to a user who may view that agent, for an agent that worked in this repository. An image of at most 3 MiB is returned as an image content block beside the JSON summary (delivery inline, with contentType and byteLength). A larger image, a recording, or another file is answered with delivery url: fetchUrl serves the bytes without further credentials, until expiresAt when the URL is signed, and reason says why (video, too_large, or not_an_image); hand a recording's fetchUrl to whatever watches video for you. kind is image, video, or file.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "number": {
+            "type": "number"
+          },
+          "url": {
+            "type": "string",
+            "description": "Attachment URL exactly as pull_request_read returns it in the description, a review, or a comment of this pull request"
+          }
+        },
+        "required": [
+          "owner",
+          "name",
+          "number",
+          "url"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "get_repository",
+      "description": "Get one Origin repository by owner and name, including default branch, mirror state, visibility, and merge settings.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          }
+        },
+        "required": [
+          "owner",
+          "name"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "grep_contents",
+      "description": "Search file contents across one Origin-hosted repository at a ref, which defaults to the default branch. The query is a regular expression matched case-sensitively; set literal for exact text, or caseInsensitive to ignore case (regex mode prefixes (?i) for GrepContents). wholeWord applies only with literal; for regex use \\b. Returns matching lines plus any requested context lines, capped at 1000 matching occurrences, and sets limitHit when that cap is reached. Each returned line contains its full text, so the occurrence cap does not bound response bytes. There is no pagination. Narrow query, filterPath, includes, or excludes to reach other matches.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "query": {
+            "type": "string",
+            "description": "Regular expression matched case-sensitively by default. Set literal for exact text, or caseInsensitive to ignore case (regex mode prefixes (?i)). wholeWord applies only with literal; for regex use \\b."
+          },
+          "ref": {
+            "description": "Branch, tag, or commit to search",
+            "type": "string"
+          },
+          "literal": {
+            "description": "Match query as exact text",
+            "type": "boolean"
+          },
+          "caseInsensitive": {
+            "description": "Ignore case when matching; regex mode prefixes the query with (?i) for GrepContents, and that prefix counts toward the query UTF-8 cap",
+            "type": "boolean"
+          },
+          "wholeWord": {
+            "description": "Match whole words only; only applied when literal is true. For regex, use \\b instead.",
+            "type": "boolean"
+          },
+          "contextBefore": {
+            "description": "Context lines before each match, at most 10",
+            "type": "number"
+          },
+          "contextAfter": {
+            "description": "Context lines after each match, at most 10",
+            "type": "number"
+          },
+          "filterPath": {
+            "description": "File or directory to search, relative to the repo root",
+            "type": "string"
+          },
+          "includes": {
+            "description": "Globs naming the only paths to search",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "excludes": {
+            "description": "Globs naming paths to leave out; an exclude beats an include",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "maxResults": {
+            "description": "Matching occurrences to return, at most 1000. Zero uses the default of 1000",
+            "type": "number"
+          }
+        },
+        "required": [
+          "owner",
+          "name",
+          "query"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "list_branches",
+      "description": "List branch names and tip commit SHAs for an Origin-hosted repository. Optional prefix filters each page after pagination.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "pageToken": {
+            "type": "string"
+          },
+          "prefix": {
+            "description": "Case-sensitive branch name prefix. Applied per page after pagination; keep following nextPageToken even when a page has no matches.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "name"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "list_commits",
+      "description": "List commits from a branch or starting ref in an Origin-hosted repository, optionally filtered by lists of exact git author or committer emails, by inclusive since and until bounds on committer time, and by a repository path as `git log --full-history -- <path>` does, without following renames, so a merge is listed when the path differs from any of its parents. A commit matches a list when its email equals any listed email, and must match every list, bound, and path that is given. A directory path matches when any descendant changes. A filtered page can be short while nextPageToken is present, and is empty with nextPageToken only after 100,000 commits were searched without a match. Keep paging to reach older matches. Each item is sha, full message, author, committer, parents, and tree. Omits patches. Continuation calls reuse the filters stored in pageToken.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "ref": {
+            "description": "Branch or starting commit",
+            "type": "string"
+          },
+          "authorEmails": {
+            "description": "Only commits whose git author email equals any listed email, case-insensitive. Not names or partial matches. At most 100 distinct emails.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "committerEmails": {
+            "description": "Only commits whose git committer email equals any listed email, case-insensitive. At most 100 distinct emails. Combined with authorEmails, a commit must match both lists.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "since": {
+            "description": "Only commits whose git committer time is at or after this RFC 3339 timestamp, such as 2026-08-01T00:00:00Z. The bound is inclusive and uses committer time, which a rebase or cherry-pick rewrites, not author time.",
+            "type": "string"
+          },
+          "until": {
+            "description": "Only commits whose git committer time is at or before this RFC 3339 timestamp, such as 2026-08-31T23:59:59Z. The bound is inclusive. Combined with since and the email filters, a commit must match every filter that is set.",
+            "type": "string"
+          },
+          "path": {
+            "description": "Only commits that change this repository path, without following renames. A merge is listed when the path differs from any of its parents, as `git log --full-history -- <path>` does. A directory matches when any descendant changes. Surrounding whitespace and empty and . segments are ignored, so leading, trailing, and repeated slashes do not matter; a .. segment is rejected. Combined with email and time filters, a commit must match every filter that is set.",
+            "type": "string"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "pageToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "name"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "list_group_members",
+      "description": "List the direct user members of one Origin review or ownership group visible to the caller for a repository. Pass the group's grp_… id or qualified @organization/group login. Members page by stable public user_… login, with the display name the portal can show or the login as fallback.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "group": {
+            "type": "string",
+            "description": "Visible review group as a grp_… id or qualified @organization/group login"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "pageToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "name",
+          "group"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "list_namespaces",
+      "description": "List the Origin namespaces (owner slugs) the caller can list repositories in, ordered by slug. Each slug is a valid owner for list_repositories; viewerCanCreateRepositories reports whether creating a repository there would be allowed. An empty list means the caller has no Origin repositories to read; repositories on GitHub or other hosts are not reachable through these tools.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "pageSize": {
+            "type": "number"
+          },
+          "pageToken": {
+            "type": "string"
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "list_pull_requests",
+      "description": "List pull requests in an Origin-hosted repository, filtered by state, head, author, base, stackId, mergeCommitShas, or inclusive mergedSince/mergedUntil bounds on mergedAt, and sorted by creation or update time in either direction. Items are compact summaries (author, timestamps, merged/closedAt/mergedAt, and stack membership when the pull request is stacked); they omit body and diff stats—use pull_request_read for those. author is an opaque user_…, app_…, or sa_… id; authorDisplayName and authorHandle name that actor when Origin resolves them, so say the name rather than the id. With stackId, the items are that stack's members in the requested sort order, not stack order; rebuild the tree from each member's stack.parent, and pass state all because the default open state leaves merged members out. mergeCommitShas matches pull requests whose merge commit equals any listed SHA; pass state merged or all because a merge commit is recorded only after landing. mergedSince and mergedUntil filter on mergedAt; unmerged pull requests never match, so pass state merged or all. Continuation calls must resend those filters with pageToken.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "state": {
+            "description": "open (default), closed, merged, or all",
+            "type": "string"
+          },
+          "head": {
+            "description": "Head branch",
+            "type": "string"
+          },
+          "author": {
+            "description": "Actor id (user_…, app_…, or sa_…)",
+            "type": "string"
+          },
+          "base": {
+            "description": "Base branch, short name or refs/heads/…",
+            "type": "string"
+          },
+          "stackId": {
+            "description": "Stack id (stk_…) from stack.id on a pull request. Lists only that stack's members, in the requested sort order rather than stack order; rebuild the tree from each member's stack.parent. Pass state all to include merged members.",
+            "type": "string"
+          },
+          "mergeCommitShas": {
+            "description": "Full merge-commit SHAs as returned in mergeCommitSha. A pull request matches when its merge commit equals any listed SHA. At most 100 distinct SHAs. Pass state merged or all; the default open state has no merge commit.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "mergedSince": {
+            "description": "Only pull requests whose mergedAt is at or after this RFC 3339 timestamp, such as 2026-08-01T00:00:00Z. The bound is inclusive. Unmerged pull requests never match. Pass state merged or all; the default open state has no mergedAt. Combined with mergedUntil, a pull request must match every bound that is set.",
+            "type": "string"
+          },
+          "mergedUntil": {
+            "description": "Only pull requests whose mergedAt is at or before this RFC 3339 timestamp, such as 2026-08-31T23:59:59Z. The bound is inclusive. Unmerged pull requests never match.",
+            "type": "string"
+          },
+          "direction": {
+            "description": "desc (default) or asc",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "created (default) or updated",
+            "type": "string"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "pageToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "name"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "list_repositories",
+      "description": "List Origin repositories belonging to an owner slug.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "pageToken": {
+            "type": "string"
+          },
+          "filter": {
+            "description": "Case-insensitive repository name substring",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "mcp_auth",
+      "description": "Authenticate this MCP server so its tools can be used.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "tool": "merge_pull_request",
+      "description": "Merge a pull request, or a stack up to and including it. On a stacked pull request this lands every open pull request from the stack root through this one in one commit (one squash commit with squash, one merge commit otherwise); Origin checks every member first and lands nothing if one is blocked. Where a merge queue owns the branch, a single pull request is queued instead, and nothing lands yet. If Origin queues a stack as one merge queue entry instead, its members land in one commit or none do. When the call queues, mergeCommitSha and mergedPrefix are empty, because nothing has landed yet. To land a stack one pull request at a time, merge the lowest open one each time; each becomes its own commit, and the ones above usually need a restack after each landing. Requires the expected head SHA of this pull request. Optional mergeMethod (merge or squash); omit it and Origin picks a method the repository accepts. mergedPrefix lists every pull request that landed. Pull requests above the target stay open; skippedDescendants is currently always empty.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "number": {
+            "type": "number"
+          },
+          "expectedHeadSha": {
+            "type": "string"
+          },
+          "mergeMethod": {
+            "description": "merge or squash. Omit for the repository default.",
+            "type": "string",
+            "enum": [
+              "merge",
+              "squash"
+            ]
+          }
+        },
+        "required": [
+          "owner",
+          "name",
+          "number",
+          "expectedHeadSha"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "pull_request_read",
+      "description": "Read one Origin-hosted pull request through a single view: summary, files, commits, reviews, comments, or threads. view defaults to summary. Summary includes labels, requested reviewers, and stack membership (stack id and parent pull request) when the pull request is stacked. The summary, reviews, and comments views carry authorDisplayName and authorHandle beside the opaque author id when Origin resolves them, so say the name rather than the id; a requested reviewer carries displayName, and handle for a user, while a group reviewer is an id with no name. The threads view requires threadIds and pages comments in those threads. Comments and threads carry url, a cursor.com link to that thread or comment on the pull request page. Images and recordings pasted into the description, a review, or a comment appear as cursor.com user-attachments URLs, and a cloud agent's screenshots and recordings as cursor.com artifact links; fetch one with get_pull_request_attachment.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "number": {
+            "type": "number"
+          },
+          "view": {
+            "default": "summary",
+            "description": "summary (default), files, commits, reviews, comments, or threads",
+            "type": "string"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "pageToken": {
+            "type": "string"
+          },
+          "startLine": {
+            "type": "number"
+          },
+          "endLine": {
+            "type": "number"
+          },
+          "threadIds": {
+            "description": "Thread ids for the threads view",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "owner",
+          "name",
+          "number"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "remove_pull_request_reviewers",
+      "description": "Remove requested reviewers from a pull request. users take a public user_… id or email and groups a grp_… id, qualified slug, or slug. reviewers take { kind, id } entries, the shape request_pull_request_reviewers returns: kind user, group, or service_account, with a user_…, grp_…, or sa_… id. Removing a reviewer that is not requested, including a bot that does not exist, does nothing.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "number": {
+            "type": "number"
+          },
+          "users": {
+            "description": "User identifiers: public user_… id or email",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "groups": {
+            "description": "Group identifiers: public grp_… id, qualified slug, or slug",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "reviewers": {
+            "description": "Reviewers by kind and public id, the shape request_pull_request_reviewers and pull_request_read return",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "user",
+                    "group",
+                    "service_account"
+                  ]
+                },
+                "id": {
+                  "type": "string",
+                  "description": "Public id: user_…, grp_…, or sa_…"
+                }
+              },
+              "required": [
+                "kind",
+                "id"
+              ]
+            }
+          }
+        },
+        "required": [
+          "owner",
+          "name",
+          "number"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "reply_pull_request_review_thread",
+      "description": "Reply to an existing review thread by thread ID.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "number": {
+            "type": "number"
+          },
+          "threadId": {
+            "type": "string",
+            "description": "Thread to reply to, from threadId on pull_request_read comments"
+          },
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "name",
+          "number",
+          "threadId",
+          "body"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "request_pull_request_reviewers",
+      "description": "Request reviewers on a pull request. users take a public user_… id or email and groups a grp_… id, qualified slug, or slug. reviewers take { kind, id } entries, the shape this tool returns: kind user, group, or service_account, with a user_…, grp_…, or sa_… id; a service_account must be a bot whose owner is on the repository's team, and a personal bot may not review a pull request its owner authored. Returns the reviewers this call requested, each with displayName when Origin resolves one, and handle for a user; a group reviewer is an id with no name.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "number": {
+            "type": "number"
+          },
+          "users": {
+            "description": "User identifiers: public user_… id or email",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "groups": {
+            "description": "Group identifiers: public grp_… id, qualified slug, or slug",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "reviewers": {
+            "description": "Reviewers by kind and public id, the shape this tool and pull_request_read return; a service_account is the sa_… id of a bot whose owner is on the repository's team",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "user",
+                    "group",
+                    "service_account"
+                  ]
+                },
+                "id": {
+                  "type": "string",
+                  "description": "Public id: user_…, grp_…, or sa_…"
+                }
+              },
+              "required": [
+                "kind",
+                "id"
+              ]
+            }
+          }
+        },
+        "required": [
+          "owner",
+          "name",
+          "number"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "rerun_checks",
+      "description": "Ask the CI app that reported a check run to run it again. Use it after checks_read shows a failure that looks like infrastructure trouble or a flaky test, not a problem in the change; investigate instead of re-running a check the change breaks or one whose re-run failed too. target takes the same shapes as checks_read. A run target re-requests that one run. A pull_request, commit, or suite target re-requests every run there that checks_read lists in failing and whose app declared it re-requestable (isRerequestable), at most 20 per call. Origin re-requests a run only when it is completed, is the latest run of its check, and is on the current head of an open pull request, with one re-request outstanding per run at a time. rerequested lists the runs this call re-requested: each reads status rerequested, which is pending and blocks a merge that requires it, until its app posts a new run, so follow it with checks_read. skipped lists the failing runs this call did not re-request, each with a message and a reason: not_rerequestable when its app does not accept re-runs, otherwise the error category Origin refused it with. truncated means the lists leave failing runs out; call again while calls keep re-requesting runs. For a run target, a refusal is the tool's error: not_found, or conflict when the run is still running, its app does not accept re-runs, it already has a re-request outstanding, or it is not on the current head of an open pull request. Other targets stop at a refusal that would repeat for every run, such as a permission or quota error or a commit that is not the current head of an open pull request; it is the tool's error when nothing was re-requested. Needs repository contents write, the same access as pushing.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "target": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "pull_request, commit, suite, or run"
+              },
+              "number": {
+                "description": "Pull request number, for a pull_request target",
+                "type": "number"
+              },
+              "sha": {
+                "description": "Commit SHA, for a commit target",
+                "type": "string"
+              },
+              "checkSuiteId": {
+                "description": "Check suite id, for a suite target",
+                "type": "string"
+              },
+              "checkRunId": {
+                "description": "Check run id, for a run target",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          }
+        },
+        "required": [
+          "owner",
+          "name",
+          "target"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "sync_mirror",
+      "description": "Sync a mirrored repository from upstream, waiting for a ref or optional SHA. Returns completed or pending.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "ref": {
+            "type": "string",
+            "description": "Full ref to fetch, such as refs/heads/main"
+          },
+          "sha": {
+            "description": "Full commit id to wait for; omit to wait on the ref tip",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "name",
+          "ref"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "update_pull_request",
+      "description": "Update a pull request's title, description, and lifecycle through the public fields. Omit title or body to leave that field unchanged; pass an empty body to clear the description. Lifecycle is state (open or closed) plus draft, sent independently: state closed closes and ignores draft; state open reopens, and without draft true marks ready and publishes an existing draft; draft true reopens as a draft, alone or together with state open; draft false marks ready and reopens a closed pull request. Send one lifecycle field, both, or neither, so a metadata-only update is valid. Metadata and lifecycle together send one public UpdatePullRequest. Origin applies present fields in its documented order; a failure can leave some fields applied, so re-read after an error. merged is not writable, and ready is draft false or state open rather than a state value.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "number": {
+            "type": "number"
+          },
+          "title": {
+            "description": "New title. Omit to leave unchanged.",
+            "type": "string"
+          },
+          "body": {
+            "description": "New description. Omit to leave unchanged. Pass \"\" to clear.",
+            "type": "string"
+          },
+          "state": {
+            "description": "open or closed. Omit to leave unchanged.",
+            "type": "string",
+            "enum": [
+              "open",
+              "closed"
+            ]
+          },
+          "draft": {
+            "description": "Draft flag. Omit to leave unchanged.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "owner",
+          "name",
+          "number"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "update_pull_request_base",
+      "description": "Retarget a pull request's base branch, stack it on another pull request, or move it off its stack. With parentPullNumber, the base becomes that pull request's head branch and the stack parent is set in the same update. With base, the pull request is retargeted to that branch: the head branch of an open pull request makes that pull request the parent, and the default branch or a branch with no open pull request moves it off its stack. Stacking is allowed only when this pull request's branch was built on the parent, meaning the two share a commit beyond the parent's own base; a branch built off trunk or from unrelated history is rejected with the rebase to run. A branch that has fallen behind the parent is accepted and the response carries needsRestack, because the pull request cannot land until it is restacked. This tool stacks and unstacks but never restacks: no commit is rebased or replayed. Returns the stored base and head refs, plus stackParent when stacked.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "number": {
+            "type": "number"
+          },
+          "base": {
+            "description": "Branch to retarget onto. The default branch or a branch with no open pull request unstacks; the head branch of an open pull request stacks on it. Send this or parentPullNumber.",
+            "type": "string"
+          },
+          "parentPullNumber": {
+            "description": "Pull request to stack on, by number. Its head branch becomes the base. Send this or base.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "owner",
+          "name",
+          "number"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "update_pull_request_comment",
+      "description": "Correct an existing pull request comment body.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "commentId": {
+            "type": "string",
+            "description": "Stable comment id from pull_request_read with view comments"
+          },
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "name",
+          "commentId",
+          "body"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "update_pull_request_labels",
+      "description": "Replace every label on a pull request with the provided names. Each name must be an existing repository label, spelled exactly, including case; this tool never creates labels. For a label that does not exist yet, call create_label first, then call this tool. Omitted labels are removed. An empty list removes all labels.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "number": {
+            "type": "number"
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Complete replacement label names. Omitted names are removed. An empty list removes all labels."
+          }
+        },
+        "required": [
+          "owner",
+          "name",
+          "number",
+          "labels"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "update_pull_request_review",
+      "description": "Correct the body of an existing pull request review.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "number": {
+            "type": "number"
+          },
+          "reviewId": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "name",
+          "number",
+          "reviewId",
+          "body"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "update_pull_request_review_thread",
+      "description": "Resolve or reopen a review thread by thread ID.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "threadId": {
+            "type": "string",
+            "description": "Thread to resolve or reopen, from threadId on pull_request_read comments"
+          },
+          "resolved": {
+            "type": "boolean",
+            "description": "True resolves the thread; false reopens it"
+          }
+        },
+        "required": [
+          "owner",
+          "name",
+          "threadId",
+          "resolved"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "tool": "upload_pull_request_attachment",
+      "description": "Upload one image or video for an Origin-hosted repository's pull requests and return url, a cursor.com user-attachments URL that only readers of the repository can open. Write it into a description, review, or comment: an image as ![alt](url), a video as the bare url on its own line. content is the file's bytes in standard base64. fileName's extension sets the kind, an image (.gif, .jpeg, .jpg, .png, .webp) up to 10 MB or a video (.mov, .mp4, .webm) up to 100 MB, and Origin checks the file's bytes against that kind. The whole MCP request is limited to 1 MiB, so a file sent through this tool can be at most about 750 KiB before encoding. Needs write access to the repository's pull requests.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "Origin namespace (owner) slug, taken from list_namespaces or an earlier Origin result. A GitHub owner or org name is not an Origin namespace unless list_namespaces returns it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Origin repository name within that namespace"
+          },
+          "fileName": {
+            "type": "string",
+            "description": "File name with its extension, such as screenshot.png"
+          },
+          "content": {
+            "type": "string",
+            "description": "The file's bytes in standard base64"
+          }
+        },
+        "required": [
+          "owner",
+          "name",
+          "fileName",
+          "content"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    }
+  ]
+}
